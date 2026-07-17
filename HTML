@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI ChatBot</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+background:#0f172a;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.container{
+width:900px;
+height:90vh;
+background:#1e293b;
+border-radius:15px;
+display:flex;
+overflow:hidden;
+box-shadow:0 0 30px rgba(0,0,0,.5);
+}
+
+.sidebar{
+width:220px;
+background:#111827;
+padding:20px;
+color:white;
+}
+
+.sidebar h2{
+margin-bottom:20px;
+}
+
+.newchat{
+width:100%;
+padding:12px;
+background:#2563eb;
+border:none;
+color:white;
+border-radius:8px;
+cursor:pointer;
+font-size:16px;
+}
+
+.chat{
+flex:1;
+display:flex;
+flex-direction:column;
+}
+
+.header{
+height:60px;
+background:#111827;
+color:white;
+display:flex;
+align-items:center;
+padding:20px;
+font-size:22px;
+}
+
+.messages{
+flex:1;
+overflow-y:auto;
+padding:20px;
+}
+
+.msg{
+max-width:70%;
+padding:15px;
+border-radius:12px;
+margin:10px 0;
+animation:fade .3s;
+}
+
+.user{
+background:#2563eb;
+color:white;
+margin-left:auto;
+}
+
+.bot{
+background:#334155;
+color:white;
+}
+
+.inputBox{
+display:flex;
+padding:20px;
+background:#111827;
+}
+
+input{
+flex:1;
+padding:15px;
+border:none;
+border-radius:10px;
+font-size:16px;
+outline:none;
+}
+
+button.send{
+margin-left:10px;
+padding:15px 20px;
+background:#2563eb;
+border:none;
+color:white;
+border-radius:10px;
+cursor:pointer;
+font-size:16px;
+}
+
+.typing{
+font-style:italic;
+opacity:.7;
+}
+
+@keyframes fade{
+from{opacity:0;transform:translateY(10px);}
+to{opacity:1;transform:translateY(0);}
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<div class="sidebar">
+<h2>🤖 AI Bot</h2>
+<button class="newchat" onclick="newChat()">+ New Chat</button>
+</div>
+
+<div class="chat">
+
+<div class="header">
+AI Assistant
+</div>
+
+<div class="messages" id="messages">
+
+<div class="msg bot">
+Hello! I'm your AI assistant.
+Ask me anything.
+</div>
+
+</div>
+
+<div class="inputBox">
+
+<input
+id="input"
+placeholder="Type a message..."
+onkeydown="if(event.key==='Enter')sendMessage()">
+
+<button class="send" onclick="sendMessage()">Send</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const messages=document.getElementById("messages");
+
+function addMessage(text,type){
+
+const div=document.createElement("div");
+div.className="msg "+type;
+div.innerHTML=text;
+
+messages.appendChild(div);
+
+messages.scrollTop=messages.scrollHeight;
+
+}
+
+function fakeAI(message){
+
+message=message.toLowerCase();
+
+if(message.includes("hello"))
+return "Hello 👋";
+
+if(message.includes("how are you"))
+return "I'm doing great!";
+
+if(message.includes("name"))
+return "I'm your AI chatbot.";
+
+if(message.includes("time"))
+return new Date().toLocaleTimeString();
+
+if(message.includes("date"))
+return new Date().toDateString();
+
+if(message.includes("joke"))
+return "Why do programmers prefer dark mode? Because light attracts bugs. 😄";
+
+const replies=[
+"Interesting. Tell me more.",
+"Can you explain that?",
+"That's a good question.",
+"I'm still learning!",
+"Very interesting!",
+"I understand.",
+"Let's think about that together.",
+"I'd love to help."
+];
+
+return replies[Math.floor(Math.random()*replies.length)];
+
+}
+
+function sendMessage(){
+
+const input=document.getElementById("input");
+
+if(input.value.trim()=="") return;
+
+addMessage(input.value,"user");
+
+const typing=document.createElement("div");
+typing.className="msg bot typing";
+typing.id="typing";
+typing.innerHTML="AI is typing...";
+messages.appendChild(typing);
+
+messages.scrollTop=messages.scrollHeight;
+
+let user=input.value;
+
+input.value="";
+
+setTimeout(()=>{
+
+typing.remove();
+
+addMessage(fakeAI(user),"bot");
+
+},1000);
+
+}
+
+function newChat(){
+
+messages.innerHTML="";
+
+addMessage("New chat started! 👋","bot");
+
+}
+
+</script>
+
+</body>
+</html>
