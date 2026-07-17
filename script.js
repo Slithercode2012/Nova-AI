@@ -3,28 +3,23 @@ const input = document.getElementById("input");
 
 let chatHistory = [];
 
-const responses = [
-    "That's an interesting question.",
-    "Can you explain that a little more?",
-    "I understand.",
-    "Tell me more.",
-    "That's really cool!",
-    "I'm always learning new things.",
-    "Thanks for asking!",
-    "I can definitely help with that.",
-    "Let's work through it together.",
-    "Here's what I think..."
-];
+function formatMessage(text) {
+    return text
+        .replace(/\n/g, "<br>")
+        .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+        .replace(/\*(.*?)\*/g, "<i>$1</i>")
+        .replace(/`([^`]+)`/g, "<code>$1</code>");
+}
 
 function addMessage(text, sender) {
 
-    const message = document.createElement("div");
+    const div = document.createElement("div");
 
-    message.className = "message " + sender;
+    div.className = "message " + sender;
 
-    message.innerHTML = formatMessage(text);
+    div.innerHTML = formatMessage(text);
 
-    messages.appendChild(message);
+    messages.appendChild(div);
 
     messages.scrollTop = messages.scrollHeight;
 
@@ -33,93 +28,126 @@ function addMessage(text, sender) {
         text
     });
 
-    saveChat();
+    localStorage.setItem(
+        "novaHistory",
+        JSON.stringify(chatHistory)
+    );
 
 }
 
-function formatMessage(text){
+function loadChat(){
 
-    text=text
-        .replace(/\n/g,"<br>")
-        .replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
-        .replace(/\*(.*?)\*/g,"<i>$1</i>")
-        .replace(/`(.*?)`/g,"<code>$1</code>");
+    const data = localStorage.getItem("novaHistory");
 
-    return text;
+    if(!data){
 
-}
+        addMessage(
+            "👋 Hello! I'm NovaChat AI. Ask me anything!",
+            "bot"
+        );
 
-function fakeAI(message){
+        return;
 
-    const msg = message.toLowerCase();
+    }
 
-    if(msg.includes("hello"))
-        return "👋 Hello! Nice to meet you.";
+    chatHistory = JSON.parse(data);
 
-    if(msg.includes("hi"))
-        return "Hi! What can I help you with today?";
+    chatHistory.forEach(msg=>{
 
-    if(msg.includes("how are you"))
-        return "I'm doing great! Thanks for asking.";
+        const div = document.createElement("div");
 
-    if(msg.includes("your name"))
-        return "I'm NovaChat AI.";
+        div.className = "message " + msg.sender;
 
-    if(msg.includes("time"))
-        return "Current time: " + new Date().toLocaleTimeString();
+        div.innerHTML = formatMessage(msg.text);
 
-    if(msg.includes("date"))
-        return "Today is " + new Date().toDateString();
+        messages.appendChild(div);
 
-    if(msg.includes("joke"))
-        return "Why do programmers love dark mode? Because light attracts bugs 😂";
-
-    if(msg.includes("weather"))
-        return "I can't check live weather yet, but once connected to an API I'll be able to.";
-
-    if(msg.includes("github"))
-        return "GitHub is an excellent place to host your code.";
-
-    if(msg.includes("html"))
-        return "HTML builds the structure of websites.";
-
-    if(msg.includes("css"))
-        return "CSS makes websites look awesome.";
-
-    if(msg.includes("javascript"))
-        return "JavaScript brings websites to life.";
-
-    return responses[Math.floor(Math.random()*responses.length)];
+    });
 
 }
 
-function typingAnimation(callback){
+function newChat(){
 
-    const typing=document.createElement("div");
+    messages.innerHTML = "";
 
-    typing.className="message bot typing";
+    chatHistory = [];
 
-    typing.id="typing";
+    localStorage.removeItem("novaHistory");
 
-    typing.innerHTML="AI is typing...";
-
-    messages.appendChild(typing);
-
-    messages.scrollTop=messages.scrollHeight;
-
-    setTimeout(()=>{
-
-        typing.remove();
-
-        callback();
-
-    },1000);
+    addMessage(
+        "👋 New chat started.",
+        "bot"
+    );
 
 }
 
-function sendMessage(){
+async function askAI(message){
 
-    const text=input.value.trim();
+    try{
+
+        const response = await fetch(
+            "http://localhost:3000/chat",
+            {
+                method:"POST",
+
+                headers:{
+                    "Content-Type":"application/json"
+                },
+
+                body:JSON.stringify({
+                    message
+                })
+
+            }
+        );
+
+        const data = await response.json();
+
+        return data.reply;
+
+    }
+
+    catch(error){
+
+        console.error(error);
+
+        return "⚠ Unable to connect to the AI server.";
+
+    }
+
+}
+
+function typing(){
+
+    const div = document.createElement("div");
+
+    div.className = "message bot typing";
+
+    div.id = "typing";
+
+    div.innerHTML = "NovaChat is typing...";
+
+    messages.appendChild(div);
+
+    messages.scrollTop = messages.scrollHeight;
+
+}
+
+function removeTyping(){
+
+    const t = document.getElementById("typing");
+
+    if(t){
+
+        t.remove();
+
+    }
+
+}
+
+async function sendMessage(){
+
+    const text = input.value.trim();
 
     if(text==="") return;
 
@@ -127,17 +155,17 @@ function sendMessage(){
 
     input.value="";
 
-    typingAnimation(()=>{
+    typing();
 
-        const reply=fakeAI(text);
+    const reply = await askAI(text);
 
-        addMessage(reply,"bot");
+    removeTyping();
 
-    });
+    addMessage(reply,"bot");
 
 }
 
-input.addEventListener("keydown",(e)=>{
+input.addEventListener("keydown",function(e){
 
     if(e.key==="Enter"){
 
@@ -147,69 +175,4 @@ input.addEventListener("keydown",(e)=>{
 
 });
 
-function newChat(){
-
-    messages.innerHTML="";
-
-    chatHistory=[];
-
-    saveChat();
-
-    addMessage("👋 New chat started.","bot");
-
-}
-
-function saveChat(){
-
-    localStorage.setItem(
-        "novaChatHistory",
-        JSON.stringify(chatHistory)
-    );
-
-}
-
-function loadChat(){
-
-    const data=localStorage.getItem("novaChatHistory");
-
-    if(!data){
-
-        addMessage("Hello! I'm NovaChat AI.","bot");
-
-        return;
-
-    }
-
-    chatHistory=JSON.parse(data);
-
-    chatHistory.forEach(msg=>{
-
-        const div=document.createElement("div");
-
-        div.className="message "+msg.sender;
-
-        div.innerHTML=formatMessage(msg.text);
-
-        messages.appendChild(div);
-
-    });
-
-    messages.scrollTop=messages.scrollHeight;
-
-}
-
-function clearHistory(){
-
-    localStorage.removeItem("novaChatHistory");
-
-    newChat();
-
-}
-
-function toggleTheme(){
-
-    document.body.classList.toggle("light");
-
-}
-
-window.onload=loadChat;
+window.onload = loadChat;
